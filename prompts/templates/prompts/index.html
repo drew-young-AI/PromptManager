@@ -1,0 +1,243 @@
+{% load static %}
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>醫療提示詞管理系統</title>
+    <link rel="stylesheet" href="{% static 'prompts/styles.css' %}">
+</head>
+<body>
+    <form id="csrf-token-form" hidden>
+        {% csrf_token %}
+    </form>
+
+    <div class="page-shell">
+        <header class="hero-card">
+            <div>
+                <h1>醫療提示詞管理系統</h1>
+            </div>
+        </header>
+
+        <div id="flashMessage" class="flash-message" role="status" aria-live="polite"></div>
+
+        <main id="appLayout" class="app-layout">
+            <aside id="catalogPanel" class="panel catalog-panel">
+                <div class="tree-toggle-row">
+                    <p class="panel-eyebrow tree-panel-title">提示詞總覽</p>
+                    <div class="tree-toggle-actions">
+                        <button
+                            id="refreshTreeButton"
+                            class="button button-secondary tree-icon-button"
+                            type="button"
+                            aria-label="重新整理提示詞樹"
+                            title="重新整理提示詞樹"
+                            style="padding: 0px"
+                        >
+                            🔄
+                        </button>
+                        <button
+                            id="treeToggleButton"
+                            class="button button-secondary tree-tab-toggle"
+                            type="button"
+                            aria-expanded="true"
+                            aria-label="收合提示詞樹"
+                            aria-controls="catalogPanelBody"
+                            title="收合提示詞樹"
+                            style="padding: 0px"
+                        >
+                            📂
+                        </button>
+                    </div>
+                </div>
+                <div id="catalogPanelBody" class="catalog-panel-body">
+                    <div id="promptTree" class="prompt-tree"></div>
+                     <p id="treeState" class="panel-copy">正在載入提示詞階層…</p>
+                </div>
+            </aside>
+
+            <section class="workspace-column editor-column">
+                <section class="panel editor-panel">
+                    <div class="panel-header">
+                        <div>
+                            <p class="panel-eyebrow">提示詞編輯與發布設定</p>
+                            <h2 id="promptSummary">建立或調整提示詞版本</h2>
+                            <button id="clearEditorButton" type="button" title="清空" aria-label="清空" class="button button-secondary tree-icon-button" style="padding:0px">🔄</button>
+                        </div>
+                        <div class="panel-meta">
+                            <span id="selectedPromptPath" class="chip chip-neutral">目前尚未選擇提示詞</span>
+                            <span id="latestVersionBadge" class="chip chip-accent">最新版本：尚未選擇</span>
+                        </div>
+                    </div>
+
+                    <div class="current-context-bar">
+                        <div class="context-card">
+                            <span class="context-label">目前提示詞</span>
+                            <strong id="contextPromptName">尚未選擇</strong>
+                        </div>
+                        <div class="context-card">
+                            <span class="context-label">目前編輯版本</span>
+                            <strong id="contextVersionName">新增版本</strong>
+                        </div>
+                        <div class="context-card">
+                            <span class="context-label">目前發布環境設定</span>
+                            <strong id="contextChannelTarget">尚未選擇</strong>
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <label>
+                            <span>部門</span>
+                            <select id="typeInput">
+                                <option value="">-- 請選擇部門 --</option>
+                                <option value="門診">門診</option>
+                                <option value="急診">急診</option>
+                                <option value="住院">住院</option>
+                                <option value="行政">行政</option>
+                                <option value="醫學研究">醫學研究</option>
+                                <option value="檢驗">檢驗</option>
+                                <option value="檢查">檢查</option>
+                                <option value="放射">放射</option>
+                                <option value="藥劑">藥劑</option>
+                                <option value="護理">護理</option>
+                                <option value="社區">社區</option>
+                                <option value="其它">其它</option>
+                            </select>
+                        </label>
+                        <label>
+                            <span>科室</span>
+                            <input id="categoryInput" type="text" list="categoryDatalist" placeholder="輸入或選擇科室名稱" autocomplete="off">
+                            <datalist id="categoryDatalist"></datalist>
+                        </label>
+                        <label>
+                            <span>提示詞名稱</span>
+                            <input id="promptNameInput" type="text" placeholder="adult-intake">
+                        </label>
+                        <label>
+                            <span>作者</span>
+                            <input id="authorInput" type="text" placeholder="clinical.ops">
+                        </label>
+                    </div>
+
+                    <div class="inline-controlsv2 editor-version-row">
+                        <label class="editor-version-card">
+                            <span>編輯中的版本</span>
+                            <select id="editorVersionSelect"></select>
+                        </label>
+                        <div class="editor-version-card">
+                            <span class="context-label">說明</span>
+                            <p id="editorVersionHint" class="panel-copy">選擇既有版本可先載入內容參考；儲存時會另外建立新版本。</p>
+                        </div>
+
+                    </div>
+
+                    <div class="stack">
+                        <label>
+                            <span>提示詞說明</span>
+                            <input id="descriptionInput" type="text" placeholder="說明此提示詞的用途，例如：用於急診分流初始評估">
+                        </label>
+                        <label>
+                            <span>角色設定</span>
+                            <textarea id="roleCharacterInput" rows="4" placeholder="例如：你是一位冷靜、細心且具同理心的醫療分流助理。"></textarea>
+                        </label>
+                        <label>
+                            <span>系統提示詞內容</span>
+                            <textarea id="contentInput" rows="10" placeholder="請依病人資訊輸出結構化建議..."></textarea>
+                        </label>
+                        <label>
+                            <span>版本說明</span>
+                            <textarea id="notesInput" rows="4" placeholder="請填寫這次版本調整的內容。"></textarea>
+                        </label>
+                    </div>
+
+                    <div class="action-row">
+                        <button id="savePromptButton" class="button button-primary" type="button">儲存為新版本</button>
+                        <button id="clearFormButton" class="button button-secondary" type="button">清除編輯內容</button>
+                        <button id="deletePromptButton" class="button button-danger-soft" type="button">刪除整筆提示詞</button>
+                        <button id="deleteVersionButton" class="button button-danger" type="button">刪除目前版本</button>
+                        <span id="lastSavedAt" class="inline-note">目前尚未儲存任何版本。</span>
+                    </div>
+                </section>
+            </section>
+
+            <aside class="workspace-column testing-column">
+                <section class="panel testing-panel">
+                    <div class="panel-header compact-header">
+                        <div>
+                            <p class="panel-eyebrow">提示詞測試台</p>
+                            <h2>測試提示詞 <span id="selectedPrompt" class="chip chip-neutral">目前尚未選擇提示詞</span></h2>
+
+                        </div>
+                        <span id="testModeBadge" class="chip chip-neutral">預覽模式</span>
+                    </div>
+
+                    <div class="inline-controls test-controls">
+                        <label>
+                            <span>測試版本</span>
+                            <select id="testVersionSelect"></select>
+                        </label>
+                        <button id="runTestButton" class="button button-primary" type="button">執行測試</button>
+                        <button id="testCurrentButton" class="button button-secondary" type="button">測試目前內容</button>
+                    </div>
+
+
+
+                    <div class="stack">
+                        <label>
+                            <span>使用者輸入</span>
+                            <textarea id="testInput" rows="5" placeholder="病人主訴胸痛 2 小時，伴隨輕微呼吸困難。"></textarea>
+                        </label>
+                    </div>
+
+                    <div class="result-grid">
+                        <section class="result-card" style="display:none;">
+                            <h3>渲染後的系統提示詞</h3>
+                            <pre id="renderedPromptOutput"></pre>
+                        </section>
+                        <section class="result-card" style="display:none;">
+                            <h3>請求內容預覽</h3>
+                            <pre id="requestPreviewOutput"></pre>
+                        </section>
+                        <section class="result-card result-card-wide">
+                            <h3>模型回應結果</h3>
+                            <pre id="modelOutput"></pre>
+                        </section>
+                    </div>
+                    <div class="result-grid">
+                    <section class="support-card test-mapping-card">
+                        <div class="panel-header compact-header">
+                            <div>
+                                <p class="panel-eyebrow">發布環境設定</p>
+                                <h2>選定版本並更新發布環境</h2>
+                            </div>
+                        </div>
+                        <div class="mapping-focus-card">
+                            <span class="context-label">目前設定的提示詞</span>
+                            <strong id="mappingPromptPath">請先在左側選擇一筆提示詞</strong>
+                            <p id="mappingVersionSummary" class="panel-copy">請先選擇測試版本，再設定發布環境。</p>
+                        </div>
+                        <div class="inline-controls mapping-controls">
+                            <label>
+                                <span>發布環境</span>
+                                <select id="channelInput">
+                                    <option value="production">production（正式）</option>
+                                    <option value="alpha">alpha（測試）</option>
+                                    <option value="beta">beta（測試）</option>
+                                </select>
+                            </label>
+                            <button id="assignChannelButton" class="button button-secondary" type="button">更新發布環境</button>
+                            <button id="removeChannelButton" class="button button-danger-soft" type="button">移除發布環境</button>
+                        </div>
+                        <div id="channelList" class="chip-list"></div>
+                    </section>
+                    </div>
+                </section>
+            </aside>
+        </main>
+    </div>
+
+    {{ ui_config|json_script:"prompt-manager-config" }}
+    {{ channel_suggestions|json_script:"prompt-channel-suggestions" }}
+    <script src="{% static 'prompts/app.js' %}" defer></script>
+</body>
+</html>
