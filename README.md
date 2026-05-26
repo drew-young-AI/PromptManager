@@ -34,6 +34,17 @@ cp .env.example .env
 python manage.py runserver
 ```
 
+## Codex CLI
+
+This repository includes a Codex-compatible skill at `codex/skills/prompt-manager`.
+Install it into your local Codex home with:
+
+```powershell
+.\codex\install-skills.ps1
+```
+
+The skill helps Codex work on the Django app, prompt core extraction, MongoDB storage adapters, and prompt run metadata without depending on UI or endpoint details.
+
 ## Docker
 
 The repository includes a Docker development setup for Django and MongoDB.
