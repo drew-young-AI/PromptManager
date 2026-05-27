@@ -1,66 +1,70 @@
-# PromptManager Refactor Plan
+# PromptManager Refactor Plan (v2.0 - Clinical AI Configuration Engine)
 
 ## Goal
 
-Extract the prompt management core from the current Django/MongoDB application so the product can evolve in layers:
+Transform PromptManager from a simple CRUD tool into a **Clinical AI Configuration Engine**. 
+The product will evolve in layers to support distinct user roles and high-rigor medical environments:
 
 ```text
-UI
-  -> frontend/backend framework
-  -> prompt management core algorithms
-  -> storage interfaces
-  -> DB and persisted document structure
+UI (Healthcare Interface)
+  -> Frontend/Backend framework
+  -> Prompt Optimization Engine (Meta-prompting)
+  -> Contextual Resolver (Dept/Scenario aware)
+  -> Prompt management core algorithms
+  -> Storage interfaces (Prompt Hierarchy + Medical Records)
 ```
 
-The end state is a core that can be tested without Django, MongoDB, browser UI, or Azure OpenAI dependencies.
+## Core Vision: Power User vs. General User
 
-## Current State
+### 1. Power User (Clinical Designer)
+- **Role**: Defines prompt logic based on **Department** (e.g., ER, Cardiology) and **Clinical Scenario** (e.g., Triage, Post-op).
+- **Optimization Button**: Implementation of a **Meta-prompting** feature that refines raw clinical instructions into structured, high-performance prompts, providing "peace of mind" and engineering consistency.
+- **Workflow**: Design -> Optimize -> Versioning -> Channel Assignment (Alpha/Beta/Prod).
 
-- Django app serves both API endpoints and the single-page UI.
-- `prompts/services.py` currently mixes validation, MongoDB access, document serialization, prompt versioning, channel assignment, prompt rendering, and LLM test execution.
-- `prompts/views.py` is mostly HTTP request/response glue, but it directly pulls concrete repositories from service factory functions.
-- MongoDB document shape is embedded in repository code rather than isolated behind stable domain models and storage ports.
-- Prompt rendering and validation are present, but not separated as reusable core algorithms.
-- Several user-facing strings appear mojibake/corrupted and should be fixed before or during the refactor.
+### 2. General User (Clinical Consumer)
+- **Role**: Consumes the "Production" version of a prompt without needing to see the underlying logic.
+- **Context Awareness**: The system automatically resolves the correct prompt based on the user's current Department and the Patient's condition.
+- **Data Integration**: Optimized prompts are combined with patient records (from MongoDB) to generate clinical insights.
 
 ## Target Architecture
 
 ```text
 prompts/
-  web/
-    views.py
-    urls.py
-    serializers.py
+  web/              # Django API (Stable Data Contract for UI)
   application/
     prompt_workflow.py
-    prompt_testing.py
+    prompt_optimization.py  # Meta-prompting logic
+    context_resolver.py     # Dept/Scenario matching
   core/
-    models.py
+    models.py       # ClinicalPromptIdentity (Dept, Scenario, Name)
+    renderer.py     # Context-aware variable injection
     validation.py
-    renderer.py
     versioning.py
-    channels.py
-    errors.py
-  ports/
-    repositories.py
-    llm_provider.py
   infrastructure/
-    mongo/
-      repositories.py
-      documents.py
-    llms/
-      azure_openai.py
-      preview.py
+    mongo/          # Prompt storage + Medical Record access
+    llms/           # Azure OpenAI + Optimization models
 ```
 
-Layer rules:
+## Core Dimension Mapping
+- **Dimension 1 (Department)**: Determines tone, authority, and clinical boundaries.
+- **Dimension 2 (Clinical Scenario/Disease)**: Determines medical knowledge scope and data requirements.
 
-- `core/` contains pure business rules and has no Django, PyMongo, HTTP, or environment variable imports.
-- `application/` coordinates workflows and depends on core plus repository/provider interfaces.
-- `ports/` defines storage and LLM interfaces.
-- `infrastructure/` adapts MongoDB and LLM providers to those interfaces.
-- `web/` adapts Django requests/responses to application services.
-- Existing API behavior should be preserved during migration unless a change is explicitly planned.
+## Refactor Phases
+
+### Phase 0: Baseline and Safety
+- [DONE] Commit current state as a save point.
+- [DONE] Establish remote MongoDB connectivity (192.168.137.232).
+- [DONE] Seed initial clinical test data.
+
+### Phase 1: Extract Pure Core & Define Clinical Context
+- Extract `renderer.py` and `validation.py`.
+- Define `ClinicalPromptIdentity` in `core/models.py` to support Department/Scenario dimensions.
+- Ensure renderer supports dynamic context injection.
+
+### Phase 2: Optimization Engine (The "Meta-Prompt" Button)
+- Implement `application/prompt_optimization.py`.
+- Define the "Master Meta-Prompt" for healthcare consistency.
+- Integrate with Azure OpenAI to provide the "Optimize" service.
 
 ## Core Domain Model Draft
 
