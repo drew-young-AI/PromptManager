@@ -1,0 +1,25 @@
+services:
+  db:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - PROMPT_MANAGER_MONGODB_URI=mongodb://db:27017/
+      - PROMPT_MANAGER_MONGODB_DB=prompt_manager
+      - PROMPT_MANAGER_MONGODB_COLLECTION=prompt_hierarchy
+      - DJANGO_DEBUG=1
+      - DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,web
+    depends_on:
+      - db
+    volumes:
+      - .:/app
+
+volumes:
+  mongo_data:
